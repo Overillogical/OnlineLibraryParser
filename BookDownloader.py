@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 
 Path('books').mkdir(parents=True, exist_ok=True)
-logging.basicConfig(filename='log.log', format = '%(asctime)s %(message)s', encoding = 'utf-8', level = logging.WARNING)
+
 
 def check_for_redirect(response, url):
     if response.url != url:
@@ -23,5 +23,4 @@ for id in range(1, 11):
         with open(filename, 'w') as file:
             file.write(response.text)  
     except requests.exceptions.HTTPError as err:
-        logging.warning(f'{repr(err)} Book id {id} is missing')
-      
+        logging.error(err, exc_info=True)
