@@ -13,14 +13,33 @@ def check_for_redirect(response, url):
         raise requests.exceptions.HTTPError
     return
 
+def download_comments(id, folder= "comments"):
+    book_comments = []
+    url = "https://tululu.org/b{}/".format(id)
+    response = requests.get(url)
+    response.raise_for_status()
+    Path('comments').mkdir(parents=True, exist_ok=True)
+    soup = BeautifulSoup(response.text, 'lxml')
+    comment_section = soup.find_all(class_='texts')
+    filename = 'Book №{} comments.txt'.format(id)
+    filepath = os.path.join(folder, filename)
+    for comment in comment_section:
+        book_comments.append(comment.find(class_='black').text)  
+    if book_comments:  
+        with open(filepath, 'w') as file:
+            file.write('\n'.join(book_comments))
+    book_comments = []
+    return
+
+
 def download_txt(id, response, url, folder="books/"):
     Path('books').mkdir(parents=True, exist_ok=True)
     check_for_redirect(response, url)
     filename = parse_book_name(id)
     filename = f'{id}. {sanitize_filename(filename).strip()}.txt'
     filepath = os.path.join(folder, filename)
-    with open(filepath, 'w') as file:
-        file.write(response.text) 
+    #with open(filepath, 'w') as file:
+    #    file.write(response.text) 
     return filepath
 
 def download_img(id, book_img_link, folder="images/"):
@@ -29,8 +48,8 @@ def download_img(id, book_img_link, folder="images/"):
     filename = urlsplit(book_img_link).path.split('/')[-1]
     filepath = os.path.join(folder, filename)
     print(response.url)
-    with open(filepath, 'wb') as file:
-        file.write(response.content) 
+    #with open(filepath, 'wb') as file:
+    #    file.write(response.content) 
     return
 
 
@@ -61,6 +80,7 @@ def main():
             download_txt(id, response, url, folder="books/")
             book_img_link = parse_book_img(id)    
             download_img(id, book_img_link, folder="images/")
+            download_comments(id)
         except requests.exceptions.HTTPError as err:
             logging.exception('Book is not downloaded, redirect found')  
         
